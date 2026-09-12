@@ -1,0 +1,246 @@
+% tz_style.sty — Стиль технического задания по ГОСТ 34.602-89
+% Для лабораторных работ по предмету «Автоматизация процессов жизненного цикла ПО»
+\ProvidesPackage{tz_style}
+
+% --- Базовые пакеты для русского языка ---
+\RequirePackage[T2A]{fontenc}
+\RequirePackage[utf8]{inputenc}
+\RequirePackage[russian]{babel}
+\RequirePackage{tempora} % Аналог Times New Roman
+\RequirePackage{microtype}
+
+% --- Настройка полей (ГОСТ 34.602-89) ---
+\RequirePackage[left=30mm, right=15mm, top=20mm, bottom=20mm, footskip=12mm]{geometry}
+
+% --- Интервалы ---
+\RequirePackage{setspace}
+\onehalfspacing % Интервал 1.5
+
+\RequirePackage{indentfirst} % Отступ первого абзаца
+\setlength{\parindent}{1.25cm} % Абзацный отступ 1.25 см
+
+% --- Нумерация страниц (ГОСТ: без номера на титульном листе, далее арабские) ---
+\RequirePackage{fancyhdr}
+\setlength{\headheight}{17pt}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[R]{\thepage}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+% --- Гиперссылки и оглавление ---
+\RequirePackage[hidelinks, unicode, psdextra]{hyperref}
+\urlstyle{same}
+
+% --- Настройка заголовков (ГОСТ 34.602-89: разделы по центру, подразделы с абзацного отступа) ---
+\RequirePackage{titlesec}
+
+% Команда для запрета переносов в заголовках
+\newcommand{\nohyphens}{\hyphenpenalty=10000\exhyphenpenalty=10000\sloppy}
+
+% Разделы (section) — с новой страницы, по центру, прописными буквами
+\titleformat{name=\section}
+{\newpage\nohyphens\normalfont\bfseries\filcenter}
+{}
+{0pt}
+{\MakeUppercase}
+
+% Подразделы (subsection) — с абзацного отступа
+\titleformat{\subsection}
+{\nohyphens\normalfont\bfseries}
+{\hspace{1.25cm}\thesubsection}
+{1em}
+{}
+
+% Пункты (subsubsection)
+\titleformat{\subsubsection}
+{\nohyphens\normalfont\bfseries}
+{\hspace{1.25cm}\thesubsubsection}
+{1em}
+{}
+
+% Расстояния до и после заголовков
+\titlespacing*{\section}{0pt}{12pt}{6pt}
+\titlespacing*{\subsection}{0pt}{12pt}{6pt}
+\titlespacing*{\subsubsection}{0pt}{12pt}{6pt}
+
+% В содержание включаются заголовки до второго уровня
+\setcounter{tocdepth}{2}
+
+% --- Перехват записи в .toc для правильного формата оглавления ---
+\makeatletter
+\let\oldaddcontentsline\addcontentsline
+\renewcommand{\addcontentsline}[3]{%
+	\ifstrequal{#2}{section}
+	{\oldaddcontentsline{#1}{#2}{\texorpdfstring{\MakeUppercase{#3}}{#3}}}
+	{\oldaddcontentsline{#1}{#2}{#3}}
+}
+\makeatother
+
+% --- Списки ---
+\RequirePackage{enumitem}
+\setlist{itemsep=0pt, topsep=6pt, partopsep=0pt, parsep=0pt}
+\setlist[enumerate,1]{label=\arabic*), leftmargin=1.25cm}
+\setlist[itemize,1]{label=--, leftmargin=1.25cm}
+
+% --- Таблицы ---
+\RequirePackage{array, booktabs, multirow, tabularx, longtable}
+\RequirePackage{caption}
+\RequirePackage{chngcntr}
+
+% Нумерация таблиц в рамках раздела
+\counterwithin{table}{section}
+
+% Подписи к таблицам (сверху, слева, «Таблица 1 — Название»)
+\captionsetup[table]{
+	labelsep=endash,
+	justification=raggedright,
+	singlelinecheck=false,
+	position=top,
+	skip=6pt,
+	font={normalfont},
+	name={Таблица}
+}
+
+% Для longtable
+\captionsetup[longtable]{
+	labelsep=endash,
+	justification=raggedright,
+	singlelinecheck=false,
+	position=top,
+	font={normalfont},
+	skip=6pt
+}
+
+% Отступы вокруг таблиц
+\setlength{\LTpre}{12pt}
+\setlength{\LTpost}{6pt}
+
+% --- Графика ---
+\RequirePackage{graphicx}
+\RequirePackage{pdflscape} % Для альбомных страниц
+\graphicspath{{images/}}
+
+% Нумерация рисунков в рамках раздела
+\counterwithin{figure}{section}
+
+% Подписи к рисункам (снизу, по центру, «Рисунок 1 — Название»)
+\captionsetup[figure]{
+	labelsep=endash,
+	justification=centering,
+	singlelinecheck=false,
+	position=bottom,
+	skip=6pt,
+	font={normalfont},
+	name={Рисунок}
+}
+
+% --- Математика ---
+\RequirePackage{amsmath, amsfonts, amssymb}
+\RequirePackage{mathtools}
+\RequirePackage{icomma}
+
+% --- Приложения ---
+% Команда для перехода к приложениям
+\newcommand{\startappendix}{%
+	\newpage
+	\appendix
+	\renewcommand{\thesection}{\Alph{section}}
+}
+
+% --- Команда для листа утверждения (ГОСТ 34.602-89) ---
+% Использование: \approvalpage{Организация-разработчик}{Организация-заказчик}{Вид АС}{Название системы}{Количество листов}{Дата начала действия}
+\newcommand{\approvalpage}[6]{%
+	\thispagestyle{empty}
+	\begin{center}
+		{\normalsize #1}\\[0.2cm]
+		{\footnotesize наименование организации -- разработчика ТЗ на АС}
+		
+		\vspace{1.5cm}
+		
+		% Два блока: УТВЕРЖДАЮ (заказчик, слева) и СОГЛАСОВАНО (разработчик, справа)
+		\noindent\begin{minipage}[t]{0.45\textwidth}
+			\centering
+			\textbf{УТВЕРЖДАЮ}\\[0.3cm]
+			Руководитель\\
+			{\footnotesize (должность, наименование}\\
+			{\footnotesize предприятия) -- заказчика АС}\\[0.4cm]
+			Личная подпись \rule{2.5cm}{0.4pt}\\[0.3cm]
+			Расшифровка подписи \rule{2.5cm}{0.4pt}\\[0.4cm]
+			М.П.\\[0.3cm]
+			Дата \rule{2cm}{0.4pt}
+		\end{minipage}%
+		\hfill
+		\begin{minipage}[t]{0.45\textwidth}
+			\centering
+			\textbf{СОГЛАСОВАНО}\\[0.3cm]
+			Руководитель\\
+			{\footnotesize (должность, наименование}\\
+			{\footnotesize предприятия) -- разработчика АС}\\[0.4cm]
+			Личная подпись \rule{2.5cm}{0.4pt}\\[0.3cm]
+			Расшифровка подписи \rule{2.5cm}{0.4pt}\\[0.4cm]
+			М.П.\\[0.3cm]
+			Дата \rule{2cm}{0.4pt}
+		\end{minipage}
+		
+		\vspace{1.5cm}
+		
+		{\large \textbf{ТЕХНИЧЕСКОЕ ЗАДАНИЕ}}\\[0.8cm]
+		
+		#3\\[0.2cm]
+		{\footnotesize наименование вида АС}\\[0.5cm]
+		
+		#4\\[0.2cm]
+		{\footnotesize наименование объекта автоматизации}\\[0.5cm]
+		
+		«\textbf{#4}»\\[0.2cm]
+		{\footnotesize сокращенное наименование АС}
+		
+		\vspace{1cm}
+		
+		На #5 листах\\[0.3cm]
+		Действует с #6
+		
+		\vfill
+		
+		Москва, \the\year
+	\end{center}
+	\newpage
+}
+
+% --- Команда для подписей в конце ТЗ ---
+\newcommand{\signatureblock}[2]{%
+	\vspace{1cm}
+	\noindent\textbf{СОСТАВИЛИ}\\[0.3cm]
+	\noindent\begin{tabular}{|p{4cm}|p{3cm}|p{4cm}|p{2cm}|p{1.5cm}|}
+		\hline
+		\textbf{Наименование организации} & \textbf{Должность} & \textbf{ФИО} & \textbf{Подпись} & \textbf{Дата} \\
+		\hline
+		#1 & #2 & & & \\
+		\hline
+	\end{tabular}
+	
+	\vspace{0.8cm}
+	\noindent\textbf{СОГЛАСОВАНО}\\[0.3cm]
+	\noindent\begin{tabular}{|p{4cm}|p{3cm}|p{4cm}|p{2cm}|p{1.5cm}|}
+		\hline
+		\textbf{Наименование организации} & \textbf{Должность} & \textbf{ФИО} & \textbf{Подпись} & \textbf{Дата} \\
+		\hline
+		Московский Политех & & & & \\
+		\hline
+	\end{tabular}
+}
+
+% --- Команда для перечня сокращений ---
+\newcommand{\abbreviations}[1]{%
+	\section*{Приложение. Перечень сокращений и условных наименований}
+	\addcontentsline{toc}{section}{Приложение. Перечень сокращений и условных наименований}
+	
+	\begin{longtable}{|p{5cm}|p{9cm}|}
+		\hline
+		\textbf{Термин, сокращение} & \textbf{Определение} \\
+		\hline
+		\endhead
+		#1
+	\end{longtable}
+}

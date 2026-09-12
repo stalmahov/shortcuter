@@ -1,1 +1,12 @@
 agent.md
+
+# LaTeX build artifacts
+latex/*.aux
+latex/*.log
+latex/*.toc
+latex/*.out
+latex/*.bbl
+latex/*.blg
+latex/*.fdb_latexmk
+latex/*.fls
+latex/*.synctex.gz
