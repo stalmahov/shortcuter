@@ -193,7 +193,7 @@
 		#4\\[0.2cm]
 		{\footnotesize наименование объекта автоматизации}\\[0.5cm]
 		
-		«\textbf{#4}»\\[0.2cm]
+		\textbf{#4}\\[0.2cm]
 		{\footnotesize сокращенное наименование АС}
 		
 		\vspace{1cm}
@@ -212,23 +212,27 @@
 \newcommand{\signatureblock}[2]{%
 	\vspace{1cm}
 	\noindent\textbf{СОСТАВИЛИ}\\[0.3cm]
-	\noindent\begin{tabular}{|p{4cm}|p{3cm}|p{4cm}|p{2cm}|p{1.5cm}|}
+	\noindent\small
+	\setlength{\tabcolsep}{4pt}%
+	\begin{tabular}{|p{4.5cm}|p{3cm}|p{1.8cm}|p{2.6cm}|p{1.8cm}|}
 		\hline
-		\textbf{Наименование организации} & \textbf{Должность} & \textbf{ФИО} & \textbf{Подпись} & \textbf{Дата} \\
+		\textbf{Организация} & \textbf{Должность} & \textbf{ФИО} & \textbf{Подпись} & \textbf{Дата} \\
 		\hline
 		#1 & #2 & & & \\
 		\hline
 	\end{tabular}
-	
+
 	\vspace{0.8cm}
 	\noindent\textbf{СОГЛАСОВАНО}\\[0.3cm]
-	\noindent\begin{tabular}{|p{4cm}|p{3cm}|p{4cm}|p{2cm}|p{1.5cm}|}
+	\noindent\begin{tabular}{|p{4.5cm}|p{3cm}|p{1.8cm}|p{2.6cm}|p{1.8cm}|}
 		\hline
-		\textbf{Наименование организации} & \textbf{Должность} & \textbf{ФИО} & \textbf{Подпись} & \textbf{Дата} \\
+		\textbf{Организация} & \textbf{Должность} & \textbf{ФИО} & \textbf{Подпись} & \textbf{Дата} \\
 		\hline
 		Московский Политех & & & & \\
 		\hline
 	\end{tabular}
+	\setlength{\tabcolsep}{6pt}
+	\normalsize
 }
 
 % --- Команда для перечня сокращений ---
