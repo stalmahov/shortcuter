@@ -441,6 +441,111 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /api/admin/users:
+    get:
+      summary: Список пользователей (админ)
+      description: |
+        Только роль admin. Роль выставляется вручную через БД (SQL в docs/),
+        отдельного эндпоинта нет.
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список пользователей
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [users]
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+        '401':
+          description: Нет или невалидный токен (UNAUTHORIZED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Нет прав администратора (FORBIDDEN)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера (с записью в журнал)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/admin/users/{id}/block:
+    post:
+      summary: Блокировка и разблокировка пользователя (админ)
+      description: |
+        Себя блокировать нельзя — 400.
+      tags: [admin]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор пользователя (users.id)
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [is_blocked]
+              properties:
+                is_blocked:
+                  type: boolean
+                  description: true — заблокировать, false — разблокировать
+      responses:
+        '200':
+          description: Возвращается обновлённый объект пользователя
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Попытка заблокировать себя (SELF_BLOCK)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нет или невалидный токен (UNAUTHORIZED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Нет прав администратора (FORBIDDEN)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Пользователь не найден (USER_NOT_FOUND)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера (с записью в журнал)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
 components:
 
   securitySchemes:
@@ -486,6 +591,17 @@ components:
         email:
           type: string
           format: email
+        role:
+          type: string
+          enum: [user, admin]
+          description: Роль; выставляется вручную через БД, не через API
+        is_blocked:
+          type: boolean
+          description: Заблокирован ли пользователь
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания (ISO 8601 UTC)
 
     Token:
       type: object
@@ -535,7 +651,6 @@ components:
           description: Идентификатор владельца; null у гостевых ссылок
 
 # TODO — следующие шаги, по одному за раз:
-#   1. GET /api/admin/users, POST /api/admin/users/{id}/block (+ схема User с role/is_blocked)
-#   2. operationId у операций — предупреждения линтера, необязательно, но полезно
-#   3. 4XX-страховка (вайлдкард) — по желанию команды
+#   1. operationId у операций — предупреждения линтера, необязательно, но полезно
+#   2. 4XX-страховка (вайлдкард) — по желанию команды
 # Полные описания полей и кодов ошибок — docs/api-contracts.md, разд. 5-6.
