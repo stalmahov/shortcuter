@@ -223,13 +223,149 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /api/my/links:
+    post:
+      summary: Создать ссылку со входом (владелец — я)
+      description: |
+        Как POST /api/links, но требует вход; owner_id проставляется из токена.
+        Отдельный путь нужен, чтобы C++-сервису не приходилось проверять чужой
+        JWT (docs/api-contracts.md, разд. 2).
+      tags: [user]
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: Исходный URL; должен быть http/https
+      responses:
+        '201':
+          description: Ссылка создана, владелец — текущий пользователь
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Link'
+        '400':
+          description: Некорректный URL (не http/https или не парсится)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нет или невалидный токен (UNAUTHORIZED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован (USER_BLOCKED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера (с записью в журнал)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      summary: Список моих ссылок
+      description: |
+        Только свои ссылки, новые первые.
+      tags: [user]
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Список ссылок текущего пользователя
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [links]
+                properties:
+                  links:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Link'
+        '401':
+          description: Нет или невалидный токен (UNAUTHORIZED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован (USER_BLOCKED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера (с записью в журнал)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/my/links/{id}:
+    delete:
+      summary: Удалить свою ссылку
+      description: |
+        Чужая или отсутствующая ссылка — 404; существование чужих ссылок
+        не раскрываем (не 403).
+      tags: [user]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор ссылки (links.id)
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: Ссылка удалена, тела нет
+        '401':
+          description: Нет или невалидный токен (UNAUTHORIZED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован (USER_BLOCKED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Ссылка не найдена или принадлежит другому пользователю
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера (с записью в журнал)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /api/my/links/{id}/alias:
     put:
       summary: Задать пользовательский алиас ссылки (VIP)
       description: |
         Меняет короткий код уже созданной ссылки на выбранный пользователем.
         Прежний код перестаёт работать.
-        TODO: ответы 401/403 — на шаге /api/my/*.
       tags: [user]
       security:
         - bearerAuth: []
@@ -270,6 +406,18 @@ paths:
           description: |
             Алиас не соответствует правилам: длина вне 3-32, недопустимые
             символы или зарезервированное имя (BAD_ALIAS / RESERVED_ALIAS)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Нет или невалидный токен (UNAUTHORIZED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован (USER_BLOCKED)
           content:
             application/json:
               schema:
@@ -376,6 +524,10 @@ components:
           format: uri
           description: Полная короткая ссылка, которую отдаём клиенту
           example: http://localhost/aB3x9Q
+        created_at:
+          type: string
+          format: date-time
+          description: Время создания (ISO 8601 UTC)
         owner_id:
           # 'null' в кавычках обязательно: без кавычек YAML прочитает null
           # как отсутствие значения, а не как имя типа
@@ -383,8 +535,7 @@ components:
           description: Идентификатор владельца; null у гостевых ссылок
 
 # TODO — следующие шаги, по одному за раз:
-#   1. POST /api/my/links, GET /api/my/links, DELETE /api/my/links/{id} + ответы 401/403
-#   2. GET /api/admin/users, POST /api/admin/users/{id}/block
-#   3. operationId у операций — предупреждения линтера, необязательно, но полезно
-#   4. 4XX-страховка (вайлдкард) — по желанию команды
+#   1. GET /api/admin/users, POST /api/admin/users/{id}/block (+ схема User с role/is_blocked)
+#   2. operationId у операций — предупреждения линтера, необязательно, но полезно
+#   3. 4XX-страховка (вайлдкард) — по желанию команды
 # Полные описания полей и кодов ошибок — docs/api-contracts.md, разд. 5-6.
