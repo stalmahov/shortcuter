@@ -1,0 +1,16 @@
+# Конфиг линтера Redocly для контракта Shortcuter.
+# Расширение Redocly в VS Code читает его само; проверка в консоли:
+#   npx @redocly/cli lint docs/openapi.yaml
+
+apis:
+  shortcuter@v1:
+    root: docs/openapi.yaml
+
+extends:
+  - recommended
+
+rules:
+  # localhost у нас настоящий (docker compose + nginx), а не заглушка
+  no-server-example.com: off
+  # у GET /{code} ответ 301 по определению, 2xx там быть не может
+  operation-2xx-response: off
