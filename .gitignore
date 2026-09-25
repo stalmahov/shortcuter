@@ -1,5 +1,13 @@
 agent.md
 
+# Secrets — never in repo (ТЗ 4.1.5)
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
 # LaTeX build artifacts
 latex/*.aux
 latex/*.log
