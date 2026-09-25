@@ -27,29 +27,32 @@ info:
       auth, static, favicon.ico — ответ 400.
 
 servers:
-  - url: http://localhost
-    description: Локальный запуск через docker compose; наружу смотрит nginx (порт 80)
+  - url: http://localhost:8000
+    description: Монолит FastAPI напрямую (порт 8000)
 
 tags:
   - name: guest
-    description: Без авторизации — сервис guest (C++)
+    description: Без входа (токен опционален там, где задаёт владельца)
   - name: user
-    description: Требуется вход — сервис user (Python/FastAPI)
+    description: Требуется вход (Bearer JWT)
   - name: admin
-    description: Требуется роль admin — сервис admin
+    description: Требуется роль admin
 
 paths:
 
   /api/links:
     post:
       operationId: create_link
-      summary: Создать короткую ссылку (гость, без входа)
+      summary: Создать короткую ссылку (гость или пользователь)
       description: |
-        Доступна без авторизации. Короткий код генерирует сервис.
+        Один путь на всех (ТЗ 4.1.1). Без токена — гостевая ссылка
+        (owner_id NULL), с токеном — своя (owner_id из токена).
         Пользовательский алиас здесь не принимается — алиас задаётся
         отдельной точкой доступа, см. PUT /api/my/links/{id}/alias.
-      tags: [guest]
-      security: []
+      tags: [guest, user]
+      security:
+        - {}
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -72,6 +75,18 @@ paths:
                 $ref: '#/components/schemas/Link'
         '400':
           description: Некорректный URL (не http/https или не парсится)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Токен приложен, но невалиден (UNAUTHORIZED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован (USER_BLOCKED)
           content:
             application/json:
               schema:
@@ -228,60 +243,6 @@ paths:
                 $ref: '#/components/schemas/Error'
 
   /api/my/links:
-    post:
-      operationId: create_my_link
-      summary: Создать ссылку со входом (владелец — я)
-      description: |
-        Как POST /api/links, но требует вход; owner_id проставляется из токена.
-        Отдельный путь нужен, чтобы C++-сервису не приходилось проверять чужой
-        JWT (docs/api-contracts.md, разд. 2).
-      tags: [user]
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              required:
-                - url
-              properties:
-                url:
-                  type: string
-                  format: uri
-                  description: Исходный URL; должен быть http/https
-      responses:
-        '201':
-          description: Ссылка создана, владелец — текущий пользователь
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Link'
-        '400':
-          description: Некорректный URL (не http/https или не парсится)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Нет или невалидный токен (UNAUTHORIZED)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '403':
-          description: Пользователь заблокирован (USER_BLOCKED)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '500':
-          description: Внутренняя ошибка сервера (с записью в журнал)
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
     get:
       operationId: list_my_links
       summary: Список моих ссылок
