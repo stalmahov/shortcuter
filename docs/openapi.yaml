@@ -42,6 +42,7 @@ paths:
 
   /api/links:
     post:
+      operationId: create_link
       summary: Создать короткую ссылку (гость, без входа)
       description: |
         Доступна без авторизации. Короткий код генерирует сервис.
@@ -84,6 +85,7 @@ paths:
 
   /{code}:
     get:
+      operationId: resolve_code
       summary: Перейти по короткой ссылке (гость)
       description: |
         Основная операция системы: находит код в базе и перенаправляет браузер
@@ -124,6 +126,7 @@ paths:
 
   /api/auth/register:
     post:
+      operationId: register_user
       summary: Регистрация пользователя
       description: |
         Создаёт пользователя. Пароль хранится только хешем
@@ -176,6 +179,7 @@ paths:
 
   /api/auth/login:
     post:
+      operationId: login_user
       summary: Вход в систему
       description: |
         Проверяет пару email-пароль, выдаёт JWT (HS256, срок жизни 24 часа).
@@ -225,6 +229,7 @@ paths:
 
   /api/my/links:
     post:
+      operationId: create_my_link
       summary: Создать ссылку со входом (владелец — я)
       description: |
         Как POST /api/links, но требует вход; owner_id проставляется из токена.
@@ -278,6 +283,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
     get:
+      operationId: list_my_links
       summary: Список моих ссылок
       description: |
         Только свои ссылки, новые первые.
@@ -318,6 +324,7 @@ paths:
 
   /api/my/links/{id}:
     delete:
+      operationId: delete_my_link
       summary: Удалить свою ссылку
       description: |
         Чужая или отсутствующая ссылка — 404; существование чужих ссылок
@@ -362,6 +369,7 @@ paths:
 
   /api/my/links/{id}/alias:
     put:
+      operationId: set_link_alias
       summary: Задать пользовательский алиас ссылки (VIP)
       description: |
         Меняет короткий код уже созданной ссылки на выбранный пользователем.
@@ -443,6 +451,7 @@ paths:
 
   /api/admin/users:
     get:
+      operationId: list_users
       summary: Список пользователей (админ)
       description: |
         Только роль admin. Роль выставляется вручную через БД (SQL в docs/),
@@ -484,6 +493,7 @@ paths:
 
   /api/admin/users/{id}/block:
     post:
+      operationId: set_user_blocked
       summary: Блокировка и разблокировка пользователя (админ)
       description: |
         Себя блокировать нельзя — 400.
@@ -651,6 +661,5 @@ components:
           description: Идентификатор владельца; null у гостевых ссылок
 
 # TODO — следующие шаги, по одному за раз:
-#   1. operationId у операций — предупреждения линтера, необязательно, но полезно
-#   2. 4XX-страховка (вайлдкард) — по желанию команды
+#   1. 4XX-страховка (вайлдкард) — по желанию команды
 # Полные описания полей и кодов ошибок — docs/api-contracts.md, разд. 5-6.
