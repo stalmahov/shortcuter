@@ -1,0 +1,390 @@
+# Контракт API Shortcuter — машиночитаемое описание (OpenAPI 3.1).
+#
+# Человекочитаемая часть с обоснованиями: docs/api-contracts.md
+# Источник требований: ТЗ, разд. 4.1.1-4.1.3 (latex/tz_shortcuter.tex)
+#
+
+# Расхождение между этим файлом и docs/api-contracts.md — баг, а не «два мнения».
+
+openapi: 3.1.0
+
+info:
+  title: Shortcuter API
+  version: 1.0.0
+  license:
+    name: MIT
+    identifier: MIT
+  description: |
+    API укорачивателя ссылок (учебный проект, АПЖЦ).
+
+    Общие соглашения:
+    - Тела запросов и успешных ответов — JSON.
+    - Ошибки — единый формат {"error": {"code": ..., "message": ...}},
+      схема Error в components; коды 400/401/403/404/409/500 (ТЗ 4.1.3).
+    - Автокод ссылки: 6 символов [A-Za-z0-9], криптографический RNG.
+    - Алиас: 3-32 символа [A-Za-z0-9_-], задаёт только VIP-пользователь.
+    - Зарезервированные имена (алиасами быть не могут): api, admin, my,
+      auth, static, favicon.ico — ответ 400.
+
+servers:
+  - url: http://localhost
+    description: Локальный запуск через docker compose; наружу смотрит nginx (порт 80)
+
+tags:
+  - name: guest
+    description: Без авторизации — сервис guest (C++)
+  - name: user
+    description: Требуется вход — сервис user (Python/FastAPI)
+  - name: admin
+    description: Требуется роль admin — сервис admin
+
+paths:
+
+  /api/links:
+    post:
+      summary: Создать короткую ссылку (гость, без входа)
+      description: |
+        Доступна без авторизации. Короткий код генерирует сервис.
+        Пользовательский алиас здесь не принимается — алиас задаётся
+        отдельной точкой доступа, см. PUT /api/my/links/{id}/alias.
+      tags: [guest]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - url
+              properties:
+                url:
+                  type: string
+                  format: uri
+                  description: Исходный URL; должен быть http/https
+      responses:
+        '201':
+          description: Ссылка создана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Link'
+        '400':
+          description: Некорректный URL (не http/https или не парсится)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера (с записью в журнал)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /{code}:
+    get:
+      summary: Перейти по короткой ссылке (гость)
+      description: |
+        Основная операция системы: находит код в базе и перенаправляет браузер
+        на исходный URL. Тела у ответа нет — адрес передаётся заголовком Location.
+      tags: [guest]
+      security: []
+      parameters:
+        - name: code
+          in: path
+          required: true
+          description: |
+            Автокод (6 символов) или пользовательский алиас (3-32 символа),
+            заданный владельцем ссылки
+          schema:
+            type: string
+            example: aB3x9Q
+      responses:
+        '301':
+          description: Перенаправление на исходный URL
+          headers:
+            Location:
+              description: Исходный URL, куда переходим
+              schema:
+                type: string
+                format: uri
+        '404':
+          description: Код не найден (LINK_NOT_FOUND)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера (с записью в журнал)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/register:
+    post:
+      summary: Регистрация пользователя
+      description: |
+        Создаёт пользователя. Пароль хранится только хешем
+        (bcrypt/argon2, на выбор реализующего).
+      tags: [user]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: Адрес пользователя; уникален
+                password:
+                  type: string
+                  minLength: 8
+                  description: Пароль, минимум 8 символов
+      responses:
+        '201':
+          description: Пользователь создан
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          description: Некорректный email или короткий пароль (WEAK_PASSWORD)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Email уже занят (EMAIL_TAKEN)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера (с записью в журнал)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/auth/login:
+    post:
+      summary: Вход в систему
+      description: |
+        Проверяет пару email-пароль, выдаёт JWT (HS256, срок жизни 24 часа).
+        Токен дальше передаётся заголовком Authorization: Bearer.
+      tags: [user]
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Вход выполнен; возвращается токен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Token'
+        '401':
+          description: Неверная пара email-пароль (UNAUTHORIZED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Пользователь заблокирован (USER_BLOCKED)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера (с записью в журнал)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/my/links/{id}/alias:
+    put:
+      summary: Задать пользовательский алиас ссылки (VIP)
+      description: |
+        Меняет короткий код уже созданной ссылки на выбранный пользователем.
+        Прежний код перестаёт работать.
+        TODO: ответы 401/403 — на шаге /api/my/*.
+      tags: [user]
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Идентификатор ссылки (links.id)
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - alias
+              properties:
+                alias:
+                  type: string
+                  minLength: 3
+                  maxLength: 32
+                  pattern: '^[A-Za-z0-9_-]+$'
+                  not:
+                    enum: [api, admin, my, auth, static, favicon.ico]
+                  description: |
+                    Должен быть уникален среди всех кодов и алиасов.
+                    Проверка на зарезервированные имена — без учёта регистра.
+      responses:
+        '200':
+          description: Алиас установлен; возвращается ссылка с новым кодом
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Link'
+        '400':
+          description: |
+            Алиас не соответствует правилам: длина вне 3-32, недопустимые
+            символы или зарезервированное имя (BAD_ALIAS / RESERVED_ALIAS)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Ссылка не найдена или принадлежит другому пользователю
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Алиас уже занят (ALIAS_TAKEN)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Внутренняя ошибка сервера (с записью в журнал)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: |
+        JWT выдаёт POST /api/auth/login; срок жизни 24 часа, алгоритм HS256,
+        секрет только в переменных окружения (docs/api-contracts.md, разд. 4).
+
+  schemas:
+
+    Error:
+      type: object
+      description: Единый формат ответа об ошибке (ТЗ 4.1.3)
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code:
+              type: string
+              description: |
+                Машиночитаемый код: BAD_URL, BAD_ALIAS, RESERVED_ALIAS,
+                ALIAS_TAKEN, LINK_NOT_FOUND, UNAUTHORIZED, FORBIDDEN,
+                USER_BLOCKED, INTERNAL_ERROR (docs/api-contracts.md, разд. 6)
+              example: ALIAS_TAKEN
+            message:
+              type: string
+              description: Текст для человека, на русском
+              example: Алиас уже занят
+
+    User:
+      type: object
+      description: Публичные поля пользователя (без хеша пароля)
+      required: [id, email]
+      properties:
+        id:
+          type: integer
+          example: 42
+        email:
+          type: string
+          format: email
+
+    Token:
+      type: object
+      description: Ответ входа — JWT и его параметры
+      required: [token, token_type, expires_in]
+      properties:
+        token:
+          type: string
+          description: 'JWT, передавать как Authorization Bearer'
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+          description: Срок жизни токена в секундах (24 часа = 86400)
+          example: 86400
+
+    Link:
+      type: object
+      description: Объект короткой ссылки
+      required: [id, code, url, short_url, owner_id]
+      properties:
+        id:
+          type: integer
+          example: 17
+        code:
+          type: string
+          description: Короткий код или алиас; уникален среди всех ссылок
+          example: aB3x9Q
+        url:
+          type: string
+          format: uri
+          description: Исходный URL
+        short_url:
+          type: string
+          format: uri
+          description: Полная короткая ссылка, которую отдаём клиенту
+          example: http://localhost/aB3x9Q
+        owner_id:
+          # 'null' в кавычках обязательно: без кавычек YAML прочитает null
+          # как отсутствие значения, а не как имя типа
+          type: [integer, 'null']
+          description: Идентификатор владельца; null у гостевых ссылок
+
+# TODO — следующие шаги, по одному за раз:
+#   1. POST /api/my/links, GET /api/my/links, DELETE /api/my/links/{id} + ответы 401/403
+#   2. GET /api/admin/users, POST /api/admin/users/{id}/block
+#   3. operationId у операций — предупреждения линтера, необязательно, но полезно
+#   4. 4XX-страховка (вайлдкард) — по желанию команды
+# Полные описания полей и кодов ошибок — docs/api-contracts.md, разд. 5-6.
