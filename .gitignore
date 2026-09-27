@@ -1,4 +1,5 @@
 agent.md
+*.code-workspace
 
 # Secrets — never in repo (ТЗ 4.1.5)
 .env
