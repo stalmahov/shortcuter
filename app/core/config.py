@@ -11,14 +11,7 @@ DATABASE_URL = os.getenv(
     # 5433: хостовый 5432 занят локальным postgres.exe (см. docker-compose.yml)
     "postgresql+psycopg://shortcuter:shortcuter@localhost:5433/shortcuter",
 )
-<<<<<<< HEAD
-BASE_URL = os.getenv(
-    "BASE_URL",
-    "http://localhost:8080"
-)
-=======
 
 # База для short_url в ответах. Меняется per-окружение (прод-домен),
 # поэтому short_url вычисляется, а не хранится в БД.
 BASE_URL = os.getenv("BASE_URL", "http://localhost:8000")
->>>>>>> main
