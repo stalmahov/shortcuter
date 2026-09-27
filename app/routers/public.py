@@ -9,12 +9,21 @@ import random
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
 
-from ..core.errors import error
-from ..schemas import Link
-from db import get_engine
-from core.security import get_user_id
+from app.core.errors import error
+from app.schemas import Link
+from app.db import get_engine
+from app.core.security import get_user_id
 
-from schemas import Link
+MOCK_URL = "https://example.com/long"
+def mock_link(code: str, url: str = MOCK_URL, owner: int | None = None) -> dict:
+    return {
+        "id": 1,
+        "code": code,
+        "url": url,
+        "short_url": f"http://localhost:8000/{code}",
+        "owner_id": owner,
+        "created_at": None,
+    }
 
 router = APIRouter()
 security = HTTPBearer(auto_error=False)
@@ -48,15 +57,14 @@ def create_link(payload: CreateLinkRequest,
             status_code=400,
             detail={"code": "BAD_URL", "message": "Ссылка должна начинаться на http:// или https://"}
         )
-    alias = payload.code
-    if not owner_id or not alias:
-        pass 
-    else:
-        if not re.match(r'^[A-Za-z0-9_-]{3,32}$', alias):
+    alias = None
+    if owner_id != None and payload.code:
+        if not re.match(r'^[A-Za-z0-9_-]{3,32}$', payload.code):
             raise HTTPException(
                 status_code=400,
                 detail={"code": "BAD_CODE", "message": "Алиас должен состоять из 3-32 латинских букв, цифр или дефисов"}
             )
+        alias = payload.code
     
     with get_engine().begin() as connection:
         # Пользователь авторизованный
@@ -88,7 +96,7 @@ def create_link(payload: CreateLinkRequest,
         # Пользователь не авторизованный
         else:
             for attempt in range(5):
-                current_alias = alias if alias else generate_random_string(6)
+                current_alias = generate_random_string(6)
                 try:
                     result = connection.execute(
                         text("""
@@ -121,7 +129,7 @@ def create_link(payload: CreateLinkRequest,
 @router.get("/{code}")
 def resolve_code(code: str):
     with get_engine().connect() as connection:
-        result = connection.execute("SELECT url FROM links WHERE code = :code",
+        result = connection.execute(text("SELECT url FROM links WHERE code = :code"),
                            {'code': code}
                            )
         row = result.fetchone()
