@@ -5,9 +5,10 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 import re
 import string
-import random
+import secrets
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
+from app.core.config import BASE_URL
 
 from app.core.errors import error
 from app.schemas import Link
@@ -20,7 +21,7 @@ def mock_link(code: str, url: str = MOCK_URL, owner: int | None = None) -> dict:
         "id": 1,
         "code": code,
         "url": url,
-        "short_url": f"http://localhost:8000/{code}",
+        "short_url": f"{BASE_URL}/{code}",
         "owner_id": owner,
         "created_at": None,
     }
@@ -32,12 +33,11 @@ def generate_random_string(length):
     # string.ascii_letters содержит 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
     # string.digits содержит '0123456789'
     letters_and_digits = string.ascii_letters + string.digits
-    return ''.join(random.choices(letters_and_digits, k=length))
+    return ''.join(secrets.choices(letters_and_digits, k=length))
 
 
 class CreateLinkRequest(BaseModel):
     url: str
-    code: str
 
 
 @router.post("/api/links", status_code=201, response_model=Link)
@@ -53,17 +53,11 @@ def create_link(payload: CreateLinkRequest,
             owner_id = None
     
     if not payload.url.startswith(("http://", "https://")):
-        raise HTTPException(
-            status_code=400,
-            detail={"code": "BAD_URL", "message": "Ссылка должна начинаться на http:// или https://"}
-        )
+        return error("BAD_URL", "Ссылка должна начинаться на http:// или https://",400)
     alias = None
     if owner_id != None and payload.code:
         if not re.match(r'^[A-Za-z0-9_-]{3,32}$', payload.code):
-            raise HTTPException(
-                status_code=400,
-                detail={"code": "BAD_CODE", "message": "Алиас должен состоять из 3-32 латинских букв, цифр или дефисов"}
-            )
+            return error("BAD_CODE", "Алиас должен состоять из 3-32 латинских букв, цифр или дефисов", 400)
         alias = payload.code
     
     with get_engine().begin() as connection:
@@ -84,15 +78,12 @@ def create_link(payload: CreateLinkRequest,
                     id=row.id,
                     code=row.code,
                     url=row.url,
-                    short_url=f"http://localhost:8000/{row.code}",
+                    short_url=f"{BASE_URL}/{row.code}",
                     owner_id=row.owner_id,
                     created_at=str(row.created_at) if row.created_at else None
                 )
             except IntegrityError:
-                raise HTTPException(
-                    status_code=409,
-                    detail={"code": "CODE_ALREADY_EXISTS", "message": "Такой алиас уже занят"}
-                )
+                return error("CODE_ALREADY_EXISTS", "Такой алиас уже занят", 409)
         # Пользователь не авторизованный
         else:
             for attempt in range(5):
@@ -112,18 +103,15 @@ def create_link(payload: CreateLinkRequest,
                         id=row.id,
                         code=row.code,
                         url=row.url,
-                        short_url=f"http://localhost:8000/{row.code}",
+                        short_url=f"{BASE_URL}/{row.code}",
                         owner_id=None,
                         created_at=str(row.created_at) if row.created_at else None
                     )
                 except IntegrityError:
-                    continue 
+                    continue
             
             # 5 коллизий подряд
-            raise HTTPException(
-                status_code=500,
-                detail={"code": "LINK_CREATION_FAILED", "message": "Не удалось создать ссылку из-за высокой нагрузки"}
-            )
+            return error("LINK_CREATION_FAILED","Не удалось создать ссылку из-за высокой нагрузки",500)
 
 
 @router.get("/{code}")

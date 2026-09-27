@@ -10,3 +10,7 @@ DATABASE_URL = os.getenv(
     "DATABASE_URL",
     "postgresql+psycopg://shortcuter:shortcuter@localhost:5432/shortcuter",
 )
+BASE_URL = os.getenv(
+    "BASE_URL",
+    "http://localhost:8080"
+)
