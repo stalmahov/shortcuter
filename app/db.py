@@ -1,7 +1,9 @@
-"""Подключение к Postgres. Реальное использование — со следующим шагом."""
+"""Подключение к Postgres. Реальное использование — со следующим шагом.
 
-from app.core.config import DATABASE_URL
+Владелец слоя: Саня (ORM-модели, миграции Alembic к ЛР8).
+"""
 
+from .core.config import DATABASE_URL
 
 def get_engine():
     # Локальный импорт: без настроенной БД модуль не тянет драйвер.

@@ -13,6 +13,9 @@ services:
 
   postgres:
     image: postgres:16-alpine
+    ports:
+      # 5433: на хосте 5432 занят локальным postgres.exe, не конфликтуем
+      - "5433:5432" # локальная разработка и тесты без докера внутри
     volumes:
       - pgdata:/var/lib/postgresql/data
     env_file:
