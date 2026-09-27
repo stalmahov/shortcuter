@@ -33,7 +33,8 @@ def generate_random_string(length):
     # string.ascii_letters содержит 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
     # string.digits содержит '0123456789'
     letters_and_digits = string.ascii_letters + string.digits
-    return ''.join(secrets.choices(letters_and_digits, k=length))
+    
+    return ''.join(secrets.choice(letters_and_digits) for i in range(length))
 
 
 class CreateLinkRequest(BaseModel):
