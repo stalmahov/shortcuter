@@ -39,6 +39,7 @@ def generate_random_string(length):
 
 class CreateLinkRequest(BaseModel):
     url: str
+    code: str | None = None
 
 
 @router.post("/api/links", status_code=201, response_model=Link)
@@ -60,7 +61,8 @@ def create_link(payload: CreateLinkRequest,
         if not re.match(r'^[A-Za-z0-9_-]{3,32}$', payload.code):
             return error("BAD_CODE", "Алиас должен состоять из 3-32 латинских букв, цифр или дефисов", 400)
         alias = payload.code
-    
+    if alias == None:
+        alias = generate_random_string(6)
     with get_engine().begin() as connection:
         # Пользователь авторизованный
         if owner_id:
