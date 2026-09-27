@@ -5,16 +5,26 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 import re
 import string
-import random
+import secrets
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError
+from app.core.config import BASE_URL
 
-from ..core.errors import error
-from ..schemas import Link
-from db import get_engine
-from core.security import get_user_id
+from app.core.errors import error
+from app.schemas import Link
+from app.db import get_engine
+from app.core.security import get_user_id
 
-from schemas import Link
+MOCK_URL = "https://example.com/long"
+def mock_link(code: str, url: str = MOCK_URL, owner: int | None = None) -> dict:
+    return {
+        "id": 1,
+        "code": code,
+        "url": url,
+        "short_url": f"{BASE_URL}/{code}",
+        "owner_id": owner,
+        "created_at": None,
+    }
 
 router = APIRouter()
 security = HTTPBearer(auto_error=False)
@@ -23,12 +33,12 @@ def generate_random_string(length):
     # string.ascii_letters содержит 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ'
     # string.digits содержит '0123456789'
     letters_and_digits = string.ascii_letters + string.digits
-    return ''.join(random.choices(letters_and_digits, k=length))
+    
+    return ''.join(secrets.choice(letters_and_digits) for i in range(length))
 
 
 class CreateLinkRequest(BaseModel):
     url: str
-    code: str
 
 
 @router.post("/api/links", status_code=201, response_model=Link)
@@ -44,19 +54,12 @@ def create_link(payload: CreateLinkRequest,
             owner_id = None
     
     if not payload.url.startswith(("http://", "https://")):
-        raise HTTPException(
-            status_code=400,
-            detail={"code": "BAD_URL", "message": "Ссылка должна начинаться на http:// или https://"}
-        )
-    alias = payload.code
-    if not owner_id or not alias:
-        pass 
-    else:
-        if not re.match(r'^[A-Za-z0-9_-]{3,32}$', alias):
-            raise HTTPException(
-                status_code=400,
-                detail={"code": "BAD_CODE", "message": "Алиас должен состоять из 3-32 латинских букв, цифр или дефисов"}
-            )
+        return error("BAD_URL", "Ссылка должна начинаться на http:// или https://",400)
+    alias = None
+    if owner_id != None and payload.code:
+        if not re.match(r'^[A-Za-z0-9_-]{3,32}$', payload.code):
+            return error("BAD_CODE", "Алиас должен состоять из 3-32 латинских букв, цифр или дефисов", 400)
+        alias = payload.code
     
     with get_engine().begin() as connection:
         # Пользователь авторизованный
@@ -76,19 +79,16 @@ def create_link(payload: CreateLinkRequest,
                     id=row.id,
                     code=row.code,
                     url=row.url,
-                    short_url=f"http://localhost:8000/{row.code}",
+                    short_url=f"{BASE_URL}/{row.code}",
                     owner_id=row.owner_id,
                     created_at=str(row.created_at) if row.created_at else None
                 )
             except IntegrityError:
-                raise HTTPException(
-                    status_code=409,
-                    detail={"code": "CODE_ALREADY_EXISTS", "message": "Такой алиас уже занят"}
-                )
+                return error("CODE_ALREADY_EXISTS", "Такой алиас уже занят", 409)
         # Пользователь не авторизованный
         else:
             for attempt in range(5):
-                current_alias = alias if alias else generate_random_string(6)
+                current_alias = generate_random_string(6)
                 try:
                     result = connection.execute(
                         text("""
@@ -104,24 +104,21 @@ def create_link(payload: CreateLinkRequest,
                         id=row.id,
                         code=row.code,
                         url=row.url,
-                        short_url=f"http://localhost:8000/{row.code}",
+                        short_url=f"{BASE_URL}/{row.code}",
                         owner_id=None,
                         created_at=str(row.created_at) if row.created_at else None
                     )
                 except IntegrityError:
-                    continue 
+                    continue
             
             # 5 коллизий подряд
-            raise HTTPException(
-                status_code=500,
-                detail={"code": "LINK_CREATION_FAILED", "message": "Не удалось создать ссылку из-за высокой нагрузки"}
-            )
+            return error("LINK_CREATION_FAILED","Не удалось создать ссылку из-за высокой нагрузки",500)
 
 
 @router.get("/{code}")
 def resolve_code(code: str):
     with get_engine().connect() as connection:
-        result = connection.execute("SELECT url FROM links WHERE code = :code",
+        result = connection.execute(text("SELECT url FROM links WHERE code = :code"),
                            {'code': code}
                            )
         row = result.fetchone()
