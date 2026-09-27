@@ -3,7 +3,7 @@
 Владелец слоя: Саня (ORM-модели, миграции Alembic к ЛР8).
 """
 
-from .config import DATABASE_URL
+from .core.config import DATABASE_URL
 
 
 def get_engine():

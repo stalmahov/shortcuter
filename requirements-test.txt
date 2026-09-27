@@ -1,0 +1,3 @@
+# Зависимости тестов ЛР7 (прод их не видит): pip install -r requirements-test.txt
+pytest
+httpx
