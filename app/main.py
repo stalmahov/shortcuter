@@ -1,11 +1,20 @@
 from fastapi import FastAPI
 from fastapi.exceptions import RequestValidationError
+from fastapi.middleware.cors import CORSMiddleware
 
 from .core.errors import error, validation_handler
 from .core.security import AuthError, UserBlocked
 from .routers import admin, auth, my, public
 
 app = FastAPI(title="Shortcuter API", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # или ["*"] для всех
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Любая ошибка валидации тела → 400 в едином формате (ТЗ 4.1.3),
 # а не 422 от FastAPI. См. core/errors.py.

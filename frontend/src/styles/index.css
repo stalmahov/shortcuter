@@ -1,0 +1,398 @@
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #f5f5f5;
+  color: #333;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+
+/* Header */
+header {
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+  padding: 1em 2em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+header h1 {
+  font-size: 1.5em;
+  font-weight: 600;
+}
+
+nav {
+  display: flex;
+  gap: 0.5em;
+  align-items: center;
+}
+
+/* Buttons */
+button {
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  border-radius: 4px;
+  font-size: 1em;
+}
+
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.nav-btn {
+  padding: 0.5em 1em;
+  border: 1px solid #ddd;
+  background: #fff;
+  font-size: 0.9em;
+  color: #333;
+}
+
+.nav-btn:hover {
+  border-color: #0066cc;
+  color: #0066cc;
+}
+
+.nav-btn.active {
+  background: #0066cc;
+  color: #fff;
+  border-color: #0066cc;
+}
+
+.btn-primary {
+  padding: 0.75em 1.5em;
+  background: #0066cc;
+  color: #fff;
+  font-weight: 500;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #0052a3;
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.2);
+}
+
+.btn-secondary {
+  padding: 0.5em 1em;
+  background: #e9ecef;
+  border: 1px solid #ddd;
+  color: #333;
+  font-size: 0.9em;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: #ddd;
+  border-color: #ccc;
+}
+
+.btn-danger {
+  padding: 0.5em 1em;
+  background: #dc3545;
+  color: #fff;
+  font-size: 0.9em;
+}
+
+.btn-danger:hover:not(:disabled) {
+  background: #c82333;
+}
+
+.btn-success {
+  padding: 0.5em 1em;
+  background: #28a745;
+  color: #fff;
+  font-size: 0.9em;
+}
+
+.btn-success:hover:not(:disabled) {
+  background: #218838;
+}
+
+.logout-btn {
+  padding: 0.5em 1em;
+  background: #dc3545;
+  color: #fff;
+  font-size: 0.9em;
+}
+
+.logout-btn:hover {
+  background: #c82333;
+}
+
+/* Main Layout */
+main {
+  max-width: 600px;
+  margin: 2em auto;
+  padding: 0 1em;
+}
+
+.section {
+  background: #fff;
+  padding: 2em;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.section h2 {
+  margin-bottom: 1.5em;
+  font-size: 1.3em;
+  color: #333;
+}
+
+/* Forms */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  margin-top: 1.5em;
+}
+
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='url'] {
+  padding: 0.75em;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 1em;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+
+input:focus {
+  outline: none;
+  border-color: #0066cc;
+  box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.1);
+}
+
+/* Messages */
+.error {
+  background: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+  padding: 1em;
+  border-radius: 4px;
+  margin-bottom: 1em;
+}
+
+.success-msg {
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+  padding: 0.75em;
+  border-radius: 4px;
+  margin-top: 0.5em;
+}
+
+/* Result */
+.result {
+  background: #f0f7ff;
+  border: 1px solid #b3d9ff;
+  padding: 1.5em;
+  border-radius: 4px;
+  margin-top: 1.5em;
+}
+
+.result p {
+  margin: 0.75em 0;
+}
+
+.result strong {
+  display: block;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+}
+
+.result code {
+  background: #fff;
+  padding: 0.25em 0.5em;
+  border-radius: 3px;
+  font-size: 0.9em;
+  color: #d63384;
+}
+
+.result-input {
+  padding: 0.5em;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  width: calc(100% - 120px);
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+}
+
+/* Links List */
+.links-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+  margin-top: 1.5em;
+}
+
+.link-card {
+  border: 1px solid #ddd;
+  padding: 1em;
+  border-radius: 4px;
+  background: #fafafa;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1em;
+  transition: all 0.2s;
+}
+
+.link-card:hover {
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.link-info {
+  flex-grow: 1;
+  min-width: 0;
+}
+
+.link-url {
+  font-size: 0.85em;
+  color: #666;
+  margin: 0 0 0.5em 0;
+  font-weight: 500;
+}
+
+.link-original {
+  margin: 0.5em 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: break-all;
+  white-space: normal;
+  color: #333;
+  line-height: 1.4;
+}
+
+.link-alias {
+  font-size: 0.85em;
+  color: #0066cc;
+  margin-top: 0.5em;
+}
+
+.link-actions {
+  display: flex;
+  gap: 0.5em;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.alias-form {
+  margin-top: 1em;
+  display: flex;
+  gap: 0.5em;
+  flex-wrap: wrap;
+}
+
+.alias-form input {
+  flex-grow: 1;
+  min-width: 200px;
+}
+
+/* Auth Toggle */
+.auth-toggle {
+  text-align: center;
+  margin-top: 1.5em;
+}
+
+.toggle-link {
+  background: none;
+  border: none;
+  color: #0066cc;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: inherit;
+  padding: 0;
+  font-family: inherit;
+}
+
+.toggle-link:hover {
+  color: #0052a3;
+}
+
+/* Status Messages */
+.loading {
+  color: #666;
+  text-align: center;
+  padding: 2em;
+}
+
+.empty {
+  color: #999;
+  font-style: italic;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  header {
+    flex-direction: column;
+    gap: 1em;
+    align-items: flex-start;
+  }
+
+  header h1 {
+    font-size: 1.25em;
+  }
+
+  nav {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .nav-btn,
+  .logout-btn {
+    flex: 1;
+    min-width: 100px;
+    padding: 0.5em 0.75em;
+    font-size: 0.85em;
+  }
+
+  main {
+    margin: 1em auto;
+  }
+
+  .section {
+    padding: 1.5em;
+  }
+
+  .link-card {
+    flex-direction: column;
+  }
+
+  .link-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .result-input {
+    width: calc(100% - 90px);
+  }
+
+  .alias-form input {
+    min-width: auto;
+  }
+}

@@ -17,9 +17,24 @@ services:
       # 5433: на хосте 5432 занят локальным postgres.exe, не конфликтуем
       - "5433:5432" # локальная разработка и тесты без докера внутри
     volumes:
+      - ./services/db:/docker-entrypoint-initdb.d
       - pgdata:/var/lib/postgresql/data
     env_file:
       - .env
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - HOST=0.0.0.0
+    depends_on:
+      - app
+    command: sh -c "npm install && npm run dev"
 
 volumes:
   pgdata:
