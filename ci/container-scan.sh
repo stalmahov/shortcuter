@@ -14,8 +14,11 @@ case "${1:-}" in
   *) echo 'Usage: bash ci/container-scan.sh bandit|gitleaks' >&2; exit 2 ;;
 esac
 # Stream files: avoids checkout-path mismatches when the agent uses a host Docker socket.
-# Requires only Docker, tar and bash on the agent. No application or DB is started.
-tar --exclude=.git --exclude=reports --exclude=node_modules --exclude=.venv -cf - . |
+# Include every tracked file, even if ignored, and new non-ignored source files.
+# Runtime .env and generated reports are not repository inputs.
+# Requires Git, Docker, tar and bash. No application or DB is started.
+git ls-files --cached --others --exclude-standard -z |
+ tar --null -T - -cf - |
  docker run --rm -i --entrypoint sh "$image" -c '
   mkdir -p /work && cd /work && tar -xf - || exit 2
   tool=$1
