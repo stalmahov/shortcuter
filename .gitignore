@@ -19,3 +19,5 @@ latex/*.blg
 latex/*.fdb_latexmk
 latex/*.fls
 latex/*.synctex.gz
+# Generated static-analysis evidence
+reports/

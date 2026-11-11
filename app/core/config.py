@@ -2,7 +2,9 @@
 
 import os
 
-JWT_SECRET = os.getenv("JWT_SECRET", "dev-secret-change-me")
+JWT_SECRET = os.getenv("JWT_SECRET")
+if not JWT_SECRET or not JWT_SECRET.strip():
+    raise RuntimeError("Set JWT_SECRET in the environment before starting Shortcuter")
 JWT_ALGORITHM = "HS256"
 JWT_TTL_SECONDS = 86400  # 24 часа
 
