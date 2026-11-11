@@ -6,6 +6,10 @@
 """
 
 import os
+import secrets
+
+# Tests use a temporary key; no shared or production secret is needed.
+os.environ.setdefault("JWT_SECRET", secrets.token_hex(32))
 
 os.environ.setdefault(
     "DATABASE_URL",

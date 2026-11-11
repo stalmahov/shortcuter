@@ -1,0 +1,35 @@
+title = "Shortcuter secret checks"
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Generated outputs and installed dependencies"
+paths = ['''(^|/)(reports|node_modules|\.venv|\.git)/''']
+
+[[rules]]
+id = "shortcuter-password-assignment"
+description = "Literal password or JWT secret assignment, including low entropy values"
+regex = '''(?i)\b(?:postgres_password|jwt_secret|password)\s*[:=]\s*["']([^\s"'#,;}{]{3,})["']'''
+secretGroup = 1
+
+[[rules.allowlists]]
+description = "Environment references are not literal credentials"
+regexTarget = "secret"
+regexes = ['''^\$''', '''^(?:None|False|True)$''']
+
+[[rules]]
+id = "shortcuter-env-secret"
+description = "Literal password or JWT secret in environment files"
+path = '''(^|/)(\.env(?:\.[^/]*)?|[^/]+\.env)$'''
+regex = '''(?im)^[ \t]*(?:POSTGRES_PASSWORD|JWT_SECRET|PASSWORD)[ \t]*=[ \t]*([^\s#]+)'''
+secretGroup = 1
+
+[[rules.allowlists]]
+regexTarget = "secret"
+regexes = ['''^\$''']
+
+[[rules]]
+id = "shortcuter-python-secret-default"
+description = "Literal fallback secret in Python environment settings"
+regex = '''(?i)os\.getenv\(["']JWT_SECRET["'],\s*["']([^"']+)["']'''
+secretGroup = 1
