@@ -3,6 +3,8 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 # Disposable CI database. Never connect pytest to a shared application database.
 run_id="${1:?Pass a unique build ID}"
+shift
+if [ "$#" -eq 0 ]; then set -- tests/; fi
 case "$run_id" in *[!0-9]*|'') echo 'Build ID must be numeric' >&2; exit 2;; esac
 network="shortcuter-ci-$run_id"
 db="shortcuter-ci-db-$run_id"
@@ -34,7 +36,7 @@ docker create --name "$runner" --network "$network" -w /work \
   -e PYTHONUNBUFFERED=1 \
   -e DATABASE_URL="postgresql+psycopg://shortcuter:$test_password@ci-db:5432/shortcuter" \
   python:3.11-slim bash -c \
-  'pip install -r requirements.txt -r requirements-test.txt && python -m pytest tests/ -v' >/dev/null
+  'pip install -r requirements.txt -r requirements-test.txt && python -m pytest -v "$@"' bash "$@" >/dev/null
 docker cp . "$runner:/work"
 docker start -a "$runner" || true
 state=$(docker inspect -f '{{.State.Status}}' "$runner")
