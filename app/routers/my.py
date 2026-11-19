@@ -24,6 +24,7 @@ def link_dto(row) -> dict:
         "url": row.url,
         "short_url": f"{BASE_URL}/{row.code}",
         "owner_id": row.owner_id,
+        "title": row.title,
         "created_at": row.created_at.isoformat() if row.created_at else None,
     }
 
@@ -33,7 +34,7 @@ def list_my_links(user: dict = Depends(get_current_user)):
     with get_engine().connect() as c:
         rows = c.execute(
             text(
-                "SELECT id, code, url, owner_id, created_at FROM links "
+                "SELECT id, code, url, owner_id, created_at, title FROM links "
                 "WHERE owner_id = :o ORDER BY created_at DESC"
             ),
             {"o": user["id"]},
@@ -70,7 +71,7 @@ def set_alias(
                 text(
                     "UPDATE links SET code = :code "
                     "WHERE id = :id AND owner_id = :o "
-                    "RETURNING id, code, url, owner_id, created_at"
+                    "RETURNING id, code, url, owner_id, created_at, title"
                 ),
                 {"code": payload.alias, "id": link_id, "o": user["id"]},
             ).fetchone()

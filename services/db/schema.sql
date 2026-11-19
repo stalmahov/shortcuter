@@ -25,7 +25,8 @@ CREATE TABLE IF NOT EXISTS links (
   code       TEXT NOT NULL UNIQUE,
   url        TEXT NOT NULL,
   owner_id   INTEGER REFERENCES users (id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  title      TEXT
 );
 
 -- Выборка «мои ссылки, новые первые» (GET /api/my/links).

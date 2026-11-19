@@ -1,9 +1,4 @@
-"""Общее для тестов ЛР7: клиент + чистая БД + помощники.
-
-Временно собираем приложение из готовых роутеров (auth, my): public.py Стёпы
- ने импортируется (см. ревью PR #8). Как только он починит импорты —
-переключить client на app.main (TODO #4, #5).
-"""
+"""Общее для интеграционных тестов: клиент, чистая БД и помощники."""
 
 import os
 import secrets
@@ -25,7 +20,7 @@ from sqlalchemy import text
 from app.core.errors import error, validation_handler
 from app.core.security import AuthError, UserBlocked
 from app.db import get_engine
-from app.routers import auth, my
+from app.routers import auth, my, public
 
 
 def build_app() -> FastAPI:
@@ -43,6 +38,7 @@ def build_app() -> FastAPI:
 
     app.include_router(auth.router)
     app.include_router(my.router)
+    app.include_router(public.router)
     return app
 
 

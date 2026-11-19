@@ -47,6 +47,19 @@ def test_list_short_url_format(client, owned):
     link = client.get("/api/my/links", headers=h).json()["links"][0]
     assert link["short_url"] == "http://localhost:8000/mine01"
     assert link["owner_id"] == 1
+    assert link["title"] is None
+
+
+def test_create_and_list_link_with_title(client):
+    headers = make_user(client)
+    payload = {"url": "https://example.com", "title": "Example Domain"}
+    created = client.post("/api/links", json=payload, headers=headers)
+    assert created.status_code == 201
+    assert created.json()["title"] == payload["title"]
+    links = client.get("/api/my/links", headers=headers).json()["links"]
+    assert [(link["id"], link["title"]) for link in links] == [
+        (created.json()["id"], payload["title"])
+    ]
 
 
 def test_delete_own_204(client, owned):

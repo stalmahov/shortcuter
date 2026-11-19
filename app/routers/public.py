@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 from fastapi.responses import RedirectResponse
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from typing import Optional
 import re
@@ -28,6 +28,7 @@ def generate_random_string(length):
 
 class CreateLinkRequest(BaseModel):
     url: str
+    title: str | None = Field(default=None, min_length=1, max_length=80)
 
 
 @router.post("/api/links", status_code=201, response_model=Link)
@@ -50,11 +51,12 @@ def create_link(payload: CreateLinkRequest,
             try:
                 result = connection.execute(
                     text("""
-                        INSERT INTO links (code, url, owner_id)
-                        VALUES (:code, :url, :owner_id)
-                        RETURNING id, code, url, owner_id, created_at;
+                        INSERT INTO links (code, url, owner_id, title)
+                        VALUES (:code, :url, :owner_id, :title)
+                        RETURNING id, code, url, owner_id, created_at, title;
                     """),
-                    {'code': current_alias, 'url': payload.url, 'owner_id': owner_id}
+                    {'code': current_alias, 'url': payload.url, 'owner_id': owner_id,
+                     'title': payload.title}
                 )
                 row = result.one()
                 
@@ -64,6 +66,7 @@ def create_link(payload: CreateLinkRequest,
                     url=row.url,
                     short_url=f"{BASE_URL}/{row.code}",
                     owner_id=None,
+                    title=row.title,
                     created_at=str(row.created_at) if row.created_at else None
                 )
             except IntegrityError:

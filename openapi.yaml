@@ -66,6 +66,11 @@ paths:
                   type: string
                   format: uri
                   description: Исходный URL; должен быть http/https
+                title:
+                  type: [string, 'null']
+                  minLength: 1
+                  maxLength: 80
+                  description: Необязательное название ссылки
       responses:
         '201':
           description: Ссылка создана
@@ -606,6 +611,9 @@ components:
           type: string
           format: uri
           description: Исходный URL
+        title:
+          type: [string, 'null']
+          description: Название ссылки, если задано
         short_url:
           type: string
           format: uri

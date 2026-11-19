@@ -19,6 +19,7 @@ class Link(BaseModel):
     short_url: str
     owner_id: int | None = None
     created_at: str | None = None
+    title: str | None = None
 
 
 class User(BaseModel):
