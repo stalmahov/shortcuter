@@ -1,12 +1,12 @@
-"""Подключение к Postgres. Реальное использование — со следующим шагом.
+"""Подключение к PostgreSQL и общий пул соединений."""
 
-Владелец слоя: Саня (ORM-модели, миграции Alembic к ЛР8).
-"""
+from functools import lru_cache
+
+from sqlalchemy import Engine, create_engine
 
 from .core.config import DATABASE_URL
 
-def get_engine():
-    # Локальный импорт: без настроенной БД модуль не тянет драйвер.
-    from sqlalchemy import create_engine
 
-    return create_engine(DATABASE_URL)
+@lru_cache(maxsize=1)
+def get_engine() -> Engine:
+    return create_engine(DATABASE_URL, pool_pre_ping=True)
