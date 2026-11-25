@@ -12,8 +12,12 @@ scratch=$(mktemp -d)
 trap 'rm -rf -- "$scratch"' EXIT
 
 dump_schema() {
+  # PostgreSQL 16.15 exposes an internal attribute version; 16.16 omits it.
   PGSERVICE="$1" pg_dump --no-password --schema=public --schema-only --no-owner --no-privileges |
-    sed -E '/^-- Dumped (from|by) /d; /^\\(un)?restrict /d' > "$2"
+    sed -E \
+      -e '/^-- Dumped (from|by) /d; /^\\(un)?restrict /d' \
+      -e '/^ALTER (FOREIGN )?TABLE ONLY .* ALTER COLUMN .* SET \(pg_attver=[0-9]+\);$/d' \
+      > "$2"
 }
 
 if ! dump_schema "$source_profile" "$scratch/source.sql" ||
