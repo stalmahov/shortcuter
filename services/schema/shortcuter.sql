@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 6BkQ1QlcRQGT0VEz9IbLkeplFRfENjjZ3wxVkFdS2ZotkVFRLFOTudU8nYiYSp9
+\restrict 7g7Lv6NmAaA5zuNHCiAVT8s4LFFbrfkDCLCP4j74PEFoIQgJf8locikb7DGatUS
 
 -- Dumped from database version 16.15
 -- Dumped by pg_dump version 16.15
@@ -17,6 +17,20 @@ SET check_function_bodies = false;
 SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
+
+--
+-- Name: public; Type: SCHEMA; Schema: -; Owner: -
+--
+
+CREATE SCHEMA public;
+
+
+--
+-- Name: SCHEMA public; Type: COMMENT; Schema: -; Owner: -
+--
+
+COMMENT ON SCHEMA public IS 'standard public schema';
+
 
 SET default_tablespace = '';
 
@@ -67,6 +81,7 @@ CREATE TABLE public.users (
     role text DEFAULT 'user'::text NOT NULL,
     is_blocked boolean DEFAULT false NOT NULL,
     created_at timestamp with time zone DEFAULT now() NOT NULL,
+    blocked_at timestamp with time zone,
     CONSTRAINT users_role_check CHECK ((role = ANY (ARRAY['user'::text, 'admin'::text])))
 );
 
@@ -156,4 +171,4 @@ ALTER TABLE ONLY public.links
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 6BkQ1QlcRQGT0VEz9IbLkeplFRfENjjZ3wxVkFdS2ZotkVFRLFOTudU8nYiYSp9
+\unrestrict 7g7Lv6NmAaA5zuNHCiAVT8s4LFFbrfkDCLCP4j74PEFoIQgJf8locikb7DGatUS

@@ -33,7 +33,8 @@ nginx нет — один процесс отвечает на всё напря
 | `GET /{code}` | редирект 301 |
 | `POST /api/auth/register`, `POST /api/auth/login` | вход |
 | `GET /api/my/links`, `DELETE /api/my/links/{id}`, `PUT /api/my/links/{id}/alias` | ссылки пользователя |
-| `GET /api/admin/users`, `POST /api/admin/users/{id}/block` | админка |
+| `GET /api/admin/users`, `POST /api/admin/users/{id}/block` | управление пользователями |
+| `GET /api/admin/links`, `DELETE /api/admin/links/{id}` | управление ссылками |
 
 Соответствует ТЗ 4.1.1 один в один: там `POST /api/links` — «гость, пользователь».
 Отдельного `POST /api/my/links` нет (был нужен только полиглоту, чтобы C++-сервис
@@ -107,7 +108,14 @@ nginx нет — один процесс отвечает на всё напря
 `{ "is_blocked": true|false }` → `200`: объект пользователя. Себя блокировать
 нельзя: `400`. Нет пользователя: `404`.
 
-Роль `admin` выставляется вручную через БД (SQL в `services/db/schema.sql`, не через API).
+**`GET /api/admin/links`** (auth + `role=admin`) — `200` со списком
+`{ "links": [{ "id", "code", "url", "owner_id" }] }`. Для гостевой ссылки
+`owner_id` равен `null`.
+
+**`DELETE /api/admin/links/{id}`** (auth + `role=admin`) — `204` после
+удаления любой ссылки и `404 LINK_NOT_FOUND`, если ссылки нет.
+
+Роль `admin` назначается вручную через БД.
 
 ## 6. Единый формат ошибок (хуки, ТЗ 4.1.3)
 
@@ -146,13 +154,15 @@ CREATE TABLE links (
   code       TEXT NOT NULL UNIQUE,
   url        TEXT NOT NULL,
   owner_id   INTEGER REFERENCES users(id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  title      TEXT
 );
 ```
 
-Правила: `owner_id NULL` = гостевая ссылка (удалить может только админ,
-отдельного эндпоинта нет — через БД; в API не добавляем). Миграции — в ЛР8,
-пока схему поднимаем SQL-файлом `services/db/schema.sql` (шаг 1).
+`owner_id NULL` обозначает гостевую ссылку. Её может удалить администратор.
+Схема для новой установки лежит в `services/db/schema.sql`. Для заблокированного пользователя административный API также возвращает дату
+`blocked_at`, если она известна. Порядок применения
+версий описан в `services/migrations/README.md`.
 
 ## 8. Проверка готовности (e2e-критерий шага 0→1)
 

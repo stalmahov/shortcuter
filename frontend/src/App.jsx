@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import HomePage from './pages/HomePage';
 import AuthPage from './pages/AuthPage';
 import MyLinksPage from './pages/MyLinksPage';
+import AdminPage from './pages/AdminPage';
 
 export default function App() {
   const [page, setPage] = useState('home');
@@ -48,6 +49,12 @@ export default function App() {
               >
                 Мои ссылки
               </button>
+              <button
+                className={`nav-btn ${page === 'admin' ? 'active' : ''}`}
+                onClick={() => setPage('admin')}
+              >
+                Пользователи
+              </button>
               <button className="logout-btn" onClick={handleLogout}>
                 Выход
               </button>
@@ -77,6 +84,7 @@ export default function App() {
         {page === 'my-links' && (
           <MyLinksPage token={user?.token} onError={handleError} />
         )}
+        {page === 'admin' && user && <AdminPage token={user.token} />}
       </main>
     </>
   );
