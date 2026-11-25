@@ -1,5 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
+
+if [ "${1:-}" = --tree ]; then
+  files=()
+  while IFS= read -r -d '' file; do
+    files+=("$file")
+  done < <(git ls-files -z -- '*.sql')
+
+  if [ "${#files[@]}" -eq 0 ]; then
+    echo 'No tracked SQL files in this checkout' >&2
+    exit 2
+  fi
+  squawk --pg-version=16.0 --assume-in-transaction --reporter=gcc "${files[@]}"
+  exit
+fi
+
 cd "$(dirname "$0")/.."
 
 if [ "${1:-}" = --docker ]; then
