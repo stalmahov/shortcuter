@@ -1,0 +1,13 @@
+services:
+  app:
+    image: ${PROD_APP_IMAGE:?Set the tested backend image digest}
+    ports: !reset []
+  postgres:
+    ports: !reset []
+  frontend:
+    build:
+      target: production
+    volumes: !reset []
+    command: !reset null
+    ports: !override
+      - "${PROD_BIND_ADDRESS:-127.0.0.1}:${PROD_HTTP_PORT:?Set the free PROD HTTP port}:80"
